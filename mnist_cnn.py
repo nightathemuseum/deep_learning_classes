@@ -2,8 +2,8 @@
 """
 nightathemuseum
 
-Implementing a deep neural net for image
-recognition on MNIST dataset.
+Designing a convolutional neural net to
+classify images in the MNIST dataset.
 
 Part of the "The Complete Self-Driving
 Car Course - Applied Deep Learning" on
@@ -61,15 +61,15 @@ x_test = x_test.reshape(x_test.shape[0],num_pixels)
 
 def create_model():
     model = Sequential()
-    model.add(Dense(40, input_dim=num_pixels,activation="relu"))
-    model.add(Dense(10, activation="relu"))
+    model.add(Dense(10, input_dim=num_pixels,activation="relu"))
+    model.add(Dense(20, activation="relu"))
     model.add(Dense(num_classes, activation="softmax"))
     model.compile(Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
 #build and train the model
 model = create_model()
-history = model.fit(x_train, y_train, validation_split=0.1, epochs=4, batch_size=200, verbose=1, shuffle=1)
+history = model.fit(x_train, y_train, validation_split=0.1, epochs=10, batch_size=200, verbose=1, shuffle=1)
 
 
 
@@ -128,5 +128,3 @@ image = image.reshape(1, num_pixels)
 #make prediction using previous model
 prediction = model.predict_classes(image)
 print("Predicted digit: ",str(prediction))
-
-
