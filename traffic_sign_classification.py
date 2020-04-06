@@ -102,6 +102,26 @@ x_train = x_train.reshape(34799, 32, 32, 1)
 x_val = x_val.reshape(4410, 32, 32, 1)
 x_test = x_test.reshape(12630, 32, 32, 1)
 
+#Data augmentation
+from keras.preprocessing.image import ImageDataGenerator
+
+data_gen = ImageDataGenerator(width_shift_range=0.1,
+                              height_shift_range=0.1,
+                              zoom_range=0.2,
+                              shear_range=0.1,
+                              rotation_range=10)
+data_gen.fit(x_train)
+batches = data_gen.flow(x_train, y_train, batch_size=32)
+x_batch, y_batch = next(batches)
+
+fig, axs = plt.subplots(1, 15, figsize=(20,5))
+fig.tight_layout()
+
+for i in range(15):
+    axs[i].imshow(x_batch[i].reshape(32, 32), cmap=plt.get_cmap('gray'))
+    axs[i].axis('off')
+
+
 #one hot encode data
 y_train = to_categorical(y_train, 43)
 y_val = to_categorical(y_val, 43)
@@ -116,7 +136,7 @@ def modified_model():
     model.add(Conv2D(30, (3,3), activation='relu'))
     model.add(Conv2D(30, (3,3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(rate=0.5))
+    # model.add(Dropout(rate=0.5))
     model.add(Flatten())
     model.add(Dense(500,activation='relu'))
     model.add(Dropout(rate=0.5))
@@ -126,8 +146,7 @@ def modified_model():
 
 #build and train the model, print summary of model
 model = modified_model()
-history = model.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=10, batch_size=400, verbose=1, shuffle=1)
-print(model.summary())
+history = model.fit_generator(data_gen.flow(x_train, y_train, batch_size=50), steps_per_epoch=2000, epochs=10, validation_data=(x_val, y_val), shuffle=1)
 
 #plot the loss
 plt.figure(0)
@@ -155,11 +174,35 @@ print('Test score:', score[0])
 print('Test accuracy:', score[1])
 
 #import image
+import requests
 from PIL import Image
 
+# https://c8.alamy.com/comp/G667W0/road-sign-speed-limit-30-kmh-zone-passau-bavaria-germany-G667W0.jpg
+# https://c8.alamy.com/comp/A0RX23/cars-and-automobiles-must-turn-left-ahead-sign-A0RX23.jpg
+# https://previews.123rf.com/images/bwylezich/bwylezich1608/bwylezich160800375/64914157-german-road-sign-slippery-road.jpg
+# https://previews.123rf.com/images/pejo/pejo0907/pejo090700003/5155701-german-traffic-sign-no-205-give-way.jpg
+# https://c8.alamy.com/comp/J2MRAJ/german-road-sign-bicycles-crossing-J2MRAJ.jpg
 
-#make prediction using model
-prediction = model.predict_classes(x_test[random.randint(0,len(x_test)-1)])
-print("Predicted class: ",str(prediction))
+plt.figure(1)
+url = 'https://c8.alamy.com/comp/J2MRAJ/german-road-sign-bicycles-crossing-J2MRAJ.jpg'
 
+r = requests.get(url, stream=True)
+img = Image.open(r.raw)
+plt.imshow(img, cmap=plt.get_cmap('gray'))
+ 
+ 
+#Preprocess image
+plt.figure(2) 
+img = np.asarray(img)
+img = cv2.resize(img, (32, 32))
+img = preprocessing(img)
+plt.imshow(img, cmap = plt.get_cmap('gray'))
+print(img.shape)
+ 
+#Reshape reshape
+ 
+img = img.reshape(1, 32, 32, 1)
+ 
+#Test image
+print("predicted sign: "+ str(model.predict_classes(img)))
 
